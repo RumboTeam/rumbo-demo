@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Rumbo · demo</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <style>
+    /* Canvas a pantalla completa: la plantilla por defecto trae un canvas de
+       tamaño fijo, que en un teléfono deja el juego en una ventanita y arruina
+       cualquier juicio de composición portrait. */
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      background: #14110E; overflow: hidden;
+      /* sin gestos del navegador encima del joystick */
+      touch-action: none; -webkit-user-select: none; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* Letterbox a 9:16 — el juego es SOLO portrait (CanvasScaler referencia
+       1080x1920). El canvas viejo ocupaba el 100% de un `<body>` sin restricción
+       de proporción: en una ventana de escritorio ancha (landscape) quedaba un
+       lienzo horizontal, y toda la UI diseñada para portrait — el bloque de
+       intro con texto largo, el botón Teléfono anclado abajo-derecha — se
+       superponía, porque el ancho disponible ya no se parecía en nada al que
+       asume el layout. No es un bug de una pantalla puntual: cualquier panel
+       de texto largo choca contra cualquier elemento anclado a una esquina en
+       cuanto el lienzo deja de ser angosto.
+       Con el body como flex container y el canvas limitado por AMBOS ejes
+       (max-width derivado del alto, max-height derivado del ancho) el canvas
+       siempre mantiene 9:16 real, centrado, con barras del color de fondo a
+       los costados en vez de estirar la interfaz fuera de su proporción. */
+    body {
+      display: flex; align-items: center; justify-content: center;
+    }
+    #unity-canvas {
+      display: block; background: #14110E;
+      touch-action: none;
+      width: 100vw; height: 100vh;
+      max-width: calc(100vh * 9 / 16);
+      max-height: calc(100vw * 16 / 9);
+    }
+    #carga {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      color: #E8E2D8; background: #14110E; z-index: 10;
+    }
+    #barra { width: 58%; max-width: 320px; height: 4px; background: #2E2A25; border-radius: 2px; }
+    #relleno { width: 0%; height: 100%; background: #C2502E; border-radius: 2px; transition: width .15s; }
+    #nota { font-size: 12px; color: #8A8177; text-align: center; padding: 0 24px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+  <div id="carga">
+    <div style="font-size:15px; letter-spacing:.08em;">RUMBO · DEMO</div>
+    <div id="barra"><div id="relleno"></div></div>
+    <div id="nota">Versión de prueba: los días 1 a 24.<br>Tu partida se guarda solo en este navegador.<br>Las voces de Mario se generaron con IA.</div>
+  </div>
+
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var carga = document.querySelector("#carga");
+    var relleno = document.querySelector("#relleno");
+
+    // El tamaño del backbuffer lo maneja Unity vía matchWebGLToCanvasSize: si se
+    // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
+    // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
+    var script = document.createElement("script");
+    script.src = "Build/BuildWeb-demo.loader.js?v=2026-10-22_1703";
+    script.onload = function () {
+      createUnityInstance(canvas, {
+        dataUrl: "Build/BuildWeb-demo.data.unityweb?v=2026-10-22_1703",
+        frameworkUrl: "Build/BuildWeb-demo.framework.js.unityweb?v=2026-10-22_1703",
+        codeUrl: "Build/BuildWeb-demo.wasm.unityweb?v=2026-10-22_1703",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Rumbo",
+        productName: "Rumbo demo",
+        productVersion: "0.1.0",
+        matchWebGLToCanvasSize: true,
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+      }, function (progreso) {
+        relleno.style.width = (progreso * 100) + "%";
+      }).then(function () {
+        carga.style.display = "none";
+      }).catch(function (e) {
+        document.querySelector("#nota").textContent = "Error al cargar: " + e;
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
