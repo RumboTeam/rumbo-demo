@@ -1,104 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Rumbo · demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="referrer" content="no-referrer">
+  <title>Rumbo · demo</title>
   <style>
-    /* Canvas a pantalla completa: la plantilla por defecto trae un canvas de
-       tamaño fijo, que en un teléfono deja el juego en una ventanita y arruina
-       cualquier juicio de composición portrait. */
-    html, body {
-      margin: 0; padding: 0; height: 100%; width: 100%;
-      background: #14110E; overflow: hidden;
-      /* sin gestos del navegador encima del joystick */
-      touch-action: none; -webkit-user-select: none; user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    /* Letterbox a 9:16 — el juego es SOLO portrait (CanvasScaler referencia
-       1080x1920). El canvas viejo ocupaba el 100% de un `<body>
-<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>` sin restricción
-       de proporción: en una ventana de escritorio ancha (landscape) quedaba un
-       lienzo horizontal, y toda la UI diseñada para portrait — el bloque de
-       intro con texto largo, el botón Teléfono anclado abajo-derecha — se
-       superponía, porque el ancho disponible ya no se parecía en nada al que
-       asume el layout. No es un bug de una pantalla puntual: cualquier panel
-       de texto largo choca contra cualquier elemento anclado a una esquina en
-       cuanto el lienzo deja de ser angosto.
-       Con el body como flex container y el canvas limitado por AMBOS ejes
-       (max-width derivado del alto, max-height derivado del ancho) el canvas
-       siempre mantiene 9:16 real, centrado, con barras del color de fondo a
-       los costados en vez de estirar la interfaz fuera de su proporción. */
-    body {
-      display: flex; align-items: center; justify-content: center;
-    }
-    #unity-canvas {
-      display: block; background: #14110E;
-      touch-action: none;
-      width: 100vw; height: 100vh;
-      max-width: calc(100vh * 16 / 9);
-      max-height: calc(100vw * 9 / 16);
-    }
-    #carga {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 14px;
-      color: #E8E2D8; background: #14110E; z-index: 10;
-    }
-    #barra { width: 58%; max-width: 320px; height: 4px; background: #2E2A25; border-radius: 2px; }
-    #relleno { width: 0%; height: 100%; background: #C2502E; border-radius: 2px; transition: width .15s; }
-    #nota { font-size: 12px; color: #8A8177; text-align: center; padding: 0 24px; line-height: 1.5; }
-    #girar { display: none; position: fixed; inset: 0; z-index: 20; background: #14110E; color: #E8E2D8;
-      flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 0 32px; }
-    #girar .icono { font-size: 44px; }
-    @media (orientation: portrait) { #girar { display: flex; } }
+    html, body { margin: 0; height: 100%; background: #14110E; color: #E8E2D8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; padding: 0 24px; }
+    a { color: #E8E2D8; }
   </style>
 </head>
 <body>
-<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>
-  <canvas id="unity-canvas" tabindex="-1"></canvas>
-
-  <div id="carga">
-    <div style="font-size:15px; letter-spacing:.08em;">RUMBO · DEMO</div>
-    <div id="barra"><div id="relleno"></div></div>
-    <div id="nota">Versión de prueba: los días 1 a 24.<br>Tu partida se guarda solo en este navegador.<br>Las voces de Mario se generaron con IA.</div>
-  </div>
-
+  <p>La demo ahora está en <a href="../">rumboteam.github.io/rumbo-demo</a>. Llevándote…</p>
   <script>
-    var canvas = document.querySelector("#unity-canvas");
-    var carga = document.querySelector("#carga");
-    var relleno = document.querySelector("#relleno");
+  // La demo horizontal se mudó al enlace principal (2026-10-23). Unity guarda la partida del navegador en
+  // /idbfs/<md5 de la dirección de la página, sin barra final>/PlayerPrefs: esta dirección y la principal
+  // tienen cajones distintos. Antes de redirigir, si aquí hay partida y en la principal todavía no, se COPIA
+  // (no se borra ni se pisa nada). Pase lo que pase, a los 3 s se redirige igual.
+  (function () {
+    var destino = "../" + location.search + location.hash;
+    var hecho = false;
+    function irse() { if (hecho) return; hecho = true; location.replace(destino); }
+    setTimeout(irse, 3000);
 
-    // El tamaño del backbuffer lo maneja Unity vía matchWebGLToCanvasSize: si se
-    // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
-    // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
-    var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-10-23_0032";
-    script.onload = function () {
-      createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-10-23_0032",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-10-23_0032",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-10-23_0032",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "Rumbo",
-        productName: "Rumbo demo",
-        productVersion: "0.1.0",
-        matchWebGLToCanvasSize: true,
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
-      }, function (progreso) {
-        relleno.style.width = (progreso * 100) + "%";
-      }).then(function () {
-        carga.style.display = "none";
-      }).catch(function (e) {
-        document.querySelector("#nota").textContent = "Error al cargar: " + e;
-      });
-    };
-    document.body.appendChild(script);
+    function md5(str) {
+      var K = [], S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21], i;
+      for (i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) | 0;
+      var bytes = [];
+      for (i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i) & 255);
+      var bits = bytes.length * 8;
+      bytes.push(128);
+      while (bytes.length % 64 !== 56) bytes.push(0);
+      for (i = 0; i < 8; i++) bytes.push(i < 4 ? (bits >>> (8 * i)) & 255 : 0);
+      var a0 = 1732584193, b0 = -271733879, c0 = -1732584194, d0 = 271733878;
+      for (var off = 0; off < bytes.length; off += 64) {
+        var M = [];
+        for (i = 0; i < 16; i++) M[i] = bytes[off + 4 * i] | (bytes[off + 4 * i + 1] << 8) | (bytes[off + 4 * i + 2] << 16) | (bytes[off + 4 * i + 3] << 24);
+        var A = a0, B = b0, C = c0, D = d0;
+        for (i = 0; i < 64; i++) {
+          var F, g;
+          if (i < 16) { F = (B & C) | (~B & D); g = i; }
+          else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+          else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16; }
+          else { F = C ^ (B | ~D); g = (7 * i) % 16; }
+          var t = D; D = C; C = B;
+          var suma = (A + F + K[i] + M[g]) | 0;
+          var s = S[(i >> 4) * 4 + (i % 4)];
+          B = (B + ((suma << s) | (suma >>> (32 - s)))) | 0;
+          A = t;
+        }
+        a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+      }
+      function hex(n) { var r = ""; for (var j = 0; j < 4; j++) r += ("0" + ((n >>> (8 * j)) & 255).toString(16)).slice(-2); return r; }
+      return hex(a0) + hex(b0) + hex(c0) + hex(d0);
+    }
+    window.rumboMd5 = md5;
+
+    try {
+      var p = location.pathname;
+      if (p.slice(-10) === "index.html") p = p.slice(0, -10);
+      if (p.slice(-1) === "/") p = p.slice(0, -1);
+      var vieja = "/idbfs/" + md5(location.origin + p);
+      var nueva = "/idbfs/" + md5(location.origin + p.slice(0, p.lastIndexOf("/")));
+      if (!window.indexedDB) { irse(); return; }
+      var q = indexedDB.open("/idbfs");
+      q.onerror = irse;
+      q.onupgradeneeded = function () { /* no existía: nada que copiar; la deja vacía para Unity */ };
+      q.onsuccess = function () {
+        var db = q.result;
+        if (!db.objectStoreNames.contains("FILE_DATA")) { db.close(); irse(); return; }
+        var tx = db.transaction("FILE_DATA", "readwrite"), st = tx.objectStore("FILE_DATA");
+        var r1 = st.get(vieja + "/PlayerPrefs");
+        r1.onsuccess = function () {
+          var archivo = r1.result;
+          if (!archivo) return;
+          var r2 = st.get(nueva + "/PlayerPrefs");
+          r2.onsuccess = function () {
+            if (r2.result) return; // la principal ya tiene partida: no se toca
+            var r3 = st.get(vieja);
+            r3.onsuccess = function () {
+              var r4 = st.get(nueva);
+              r4.onsuccess = function () {
+                if (!r4.result && r3.result) st.put(r3.result, nueva);
+                st.put(archivo, nueva + "/PlayerPrefs");
+                window.rumboCopiada = true;
+              };
+            };
+          };
+        };
+        tx.oncomplete = function () { db.close(); irse(); };
+        tx.onerror = tx.onabort = function () { db.close(); irse(); };
+      };
+    } catch (e) { irse(); }
+  })();
   </script>
 </body>
 </html>

@@ -1,10 +1,12 @@
 # Rumbo · demo
 
-Versión de prueba de **Rumbo**, un juego sobre la vida y el dinero en un barrio. La demo llega hasta el día 24.
+Versión de prueba de **Rumbo**, un juego sobre la vida y el dinero en un barrio: https://rumboteam.github.io/rumbo-demo/
 
-- **Versión vertical** (la de siempre, mejor en el teléfono): https://rumboteam.github.io/rumbo-demo/
-- **Versión horizontal** (prueba, para jugar con el teléfono de lado): https://rumboteam.github.io/rumbo-demo/horizontal/
-- No hace falta instalar nada. La partida se guarda solo en tu navegador, y la versión vertical y la horizontal guardan en el mismo sitio.
+- Se juega en el navegador, con el teléfono **en horizontal**. No hace falta instalar nada.
+- En el menú hay dos opciones:
+  - **Jugar la demo:** los días 1 a 24.
+  - **Probar interés compuesto:** un prototipo con dinero ficticio. La tasa y los precios son inventados, y no es asesoría ni la promesa de ninguna inversión real.
+- Cada opción guarda su partida aparte, solo en tu navegador. La dirección antigua `/horizontal/` lleva aquí, y te trae tu partida si aquí no tenías otra.
 - El juego no tiene cuentas, no pide datos y no se conecta a ningún servidor.
 - Las voces de Mario se generaron con IA.
 

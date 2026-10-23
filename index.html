@@ -22,7 +22,8 @@
     }
 
     /* Letterbox a 9:16 — el juego es SOLO portrait (CanvasScaler referencia
-       1080x1920). El canvas viejo ocupaba el 100% de un `<body>` sin restricción
+       1080x1920). El canvas viejo ocupaba el 100% de un `<body>
+<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>` sin restricción
        de proporción: en una ventana de escritorio ancha (landscape) quedaba un
        lienzo horizontal, y toda la UI diseñada para portrait — el bloque de
        intro con texto largo, el botón Teléfono anclado abajo-derecha — se
@@ -41,8 +42,8 @@
       display: block; background: #14110E;
       touch-action: none;
       width: 100vw; height: 100vh;
-      max-width: calc(100vh * 9 / 16);
-      max-height: calc(100vw * 16 / 9);
+      max-width: calc(100vh * 16 / 9);
+      max-height: calc(100vw * 9 / 16);
     }
     #carga {
       position: fixed; inset: 0; display: flex; flex-direction: column;
@@ -52,9 +53,14 @@
     #barra { width: 58%; max-width: 320px; height: 4px; background: #2E2A25; border-radius: 2px; }
     #relleno { width: 0%; height: 100%; background: #C2502E; border-radius: 2px; transition: width .15s; }
     #nota { font-size: 12px; color: #8A8177; text-align: center; padding: 0 24px; line-height: 1.5; }
+    #girar { display: none; position: fixed; inset: 0; z-index: 20; background: #14110E; color: #E8E2D8;
+      flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 0 32px; }
+    #girar .icono { font-size: 44px; }
+    @media (orientation: portrait) { #girar { display: flex; } }
   </style>
 </head>
 <body>
+<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>
   <canvas id="unity-canvas" tabindex="-1"></canvas>
 
   <div id="carga">
@@ -72,12 +78,12 @@
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo.loader.js?v=2026-10-23_0030";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-10-23_1347";
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo.data.unityweb?v=2026-10-23_0030",
-        frameworkUrl: "Build/BuildWeb-demo.framework.js.unityweb?v=2026-10-23_0030",
-        codeUrl: "Build/BuildWeb-demo.wasm.unityweb?v=2026-10-23_0030",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-10-23_1347",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-10-23_1347",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-10-23_1347",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
