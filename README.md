@@ -10,5 +10,12 @@ Versión de prueba de **Rumbo**, un juego sobre la vida y el dinero en un barrio
 - El juego no tiene cuentas, no pide datos y no se conecta a ningún servidor.
 - Las voces de Mario se generaron con IA.
 
+## Actualización del 24 de octubre de 2026
+
+- Energía visible con cápsula, rayo, cifra y estado de rendimiento. El relleno cambia entre verde salvia, ocre y terracota.
+- En el prototipo, la carta se abre directamente: se retiró la pregunta de estimación cuyo resultado ya mostraba el marcador.
+- Build publicada: `2026-10-23 19:44`. Cambios de interfaz; sin cambios de precios, calendario o reglas económicas.
+- La integración narrativa del ahorro dentro de la historia sigue en diseño; esta actualización conserva el acceso al prototipo desde el menú.
+
 Este repositorio contiene solo la versión compilada de la demo, no el código fuente.
 © Rumbo. Todos los derechos reservados. Prohibido redistribuir o modificar sin permiso.
