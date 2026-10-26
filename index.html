@@ -12,8 +12,18 @@
     /* Canvas a pantalla completa: la plantilla por defecto trae un canvas de
        tamaño fijo, que en un teléfono deja el juego en una ventanita y arruina
        cualquier juicio de composición portrait. */
+    :root {
+      /* Proporción del lienzo: 9:16 aquí; la demo en horizontal la cambia a 16:9 (RumboBuild.AjustarPaginaDemo). */
+      --prop-ancho: 16; --prop-alto: 9;
+      /* Lo que de verdad se ve (2026-10-26). En los navegadores de teléfono `100vh` es el alto CON la barra de
+         direcciones escondida; de lado, sin desplazamiento, esa barra no se esconde nunca, así que un lienzo de
+         `100vh` quedaba más alto que la pantalla y se cortaba arriba y abajo: el marcador y «Teléfono» quedaban
+         fuera y había que quitar zoom a mano. `100dvh` es el alto visible de cada momento. */
+      --vis-ancho: 100vw; --vis-alto: 100vh;
+    }
+    @supports (height: 100dvh) { :root { --vis-ancho: 100dvw; --vis-alto: 100dvh; } }
     html, body {
-      margin: 0; padding: 0; height: 100%; width: 100%;
+      margin: 0; padding: 0; height: 100%; height: var(--vis-alto); width: 100%;
       background: #14110E; overflow: hidden;
       /* sin gestos del navegador encima del joystick */
       touch-action: none; -webkit-user-select: none; user-select: none;
@@ -32,18 +42,24 @@
        de texto largo choca contra cualquier elemento anclado a una esquina en
        cuanto el lienzo deja de ser angosto.
        Con el body como flex container y el canvas limitado por AMBOS ejes
-       (max-width derivado del alto, max-height derivado del ancho) el canvas
-       siempre mantiene 9:16 real, centrado, con barras del color de fondo a
-       los costados en vez de estirar la interfaz fuera de su proporción. */
+       (ancho derivado del alto, alto derivado del ancho) el canvas siempre
+       mantiene su proporción real, centrado, con barras del color de fondo a
+       los costados en vez de estirar la interfaz fuera de su proporción.
+       Los bordes seguros (muesca, esquinas redondeadas, barra de gestos) se
+       descuentan con `env(safe-area-inset-*)`: con `viewport-fit=cover` la
+       página llega bajo ellos y un botón pegado a una esquina quedaría tapado. */
     body {
       display: flex; align-items: center; justify-content: center;
+      box-sizing: border-box;
+      padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     }
     #unity-canvas {
       display: block; background: #14110E;
       touch-action: none;
-      width: 100vw; height: 100vh;
-      max-width: calc(100vh * 16 / 9);
-      max-height: calc(100vw * 9 / 16);
+      --libre-ancho: calc(var(--vis-ancho) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+      --libre-alto: calc(var(--vis-alto) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      width: min(var(--libre-ancho), calc(var(--libre-alto) * var(--prop-ancho) / var(--prop-alto)));
+      height: min(var(--libre-alto), calc(var(--libre-ancho) * var(--prop-alto) / var(--prop-ancho)));
     }
     #carga {
       position: fixed; inset: 0; display: flex; flex-direction: column;
@@ -78,12 +94,12 @@
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-10-25_2001";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-10-26_0446";
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-10-25_2001",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-10-25_2001",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-10-25_2001",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-10-26_0446",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-10-26_0446",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-10-26_0446",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
