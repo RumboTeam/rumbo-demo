@@ -69,6 +69,19 @@
     #barra { width: 58%; max-width: 320px; height: 4px; background: #2E2A25; border-radius: 2px; }
     #relleno { width: 0%; height: 100%; background: #C2502E; border-radius: 2px; transition: width .15s; }
     #nota { font-size: 12px; color: #8A8177; text-align: center; padding: 0 24px; line-height: 1.5; }
+    /* En un móvil apaisado (unos 360 px de alto) la ayuda no cabe: el recuadro se desplaza y la nota fija se oculta. */
+    #carga { overflow-y: auto; justify-content: safe center; padding: 16px 0; box-sizing: border-box; touch-action: pan-y; }
+    #carga.con-ayuda #nota { display: none; }
+    #estado { font-size: 13px; color: #E8E2D8; text-align: center; min-height: 1.4em; }
+    #ayuda { max-width: 420px; margin: 4px 24px 0; padding: 14px 18px; border: 1px solid #3A342D; border-radius: 10px;
+      font-size: 13px; line-height: 1.5; color: #E8E2D8; background: #1E1A16; }
+    #ayuda[hidden] { display: none; }
+    #ayuda .titulo { font-weight: 600; margin-bottom: 6px; }
+    #ayuda ul { margin: 0 0 10px; padding-left: 18px; }
+    #ayuda button { font: inherit; font-weight: 600; color: #F5F1EA; background: #C2502E; border: 0; border-radius: 8px;
+      padding: 9px 16px; cursor: pointer; }
+    #detalle, #equipo { font-size: 11px; color: #8A8177; margin-top: 8px; word-break: break-word; }
+    #detalle:empty { display: none; }
     #girar { display: none; position: fixed; inset: 0; z-index: 20; background: #14110E; color: #E8E2D8;
       flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 0 32px; }
     #girar .icono { font-size: 44px; }
@@ -82,7 +95,19 @@
   <div id="carga">
     <div style="font-size:15px; letter-spacing:.08em;">RUMBO · DEMO</div>
     <div id="barra"><div id="relleno"></div></div>
+    <div id="estado">Cargando…</div>
     <div id="nota">Versión de prueba: los días 1 a 24.<br>Tu partida se guarda solo en este navegador.<br>Las voces de Mario se generaron con IA.</div>
+    <div id="ayuda" hidden>
+      <div class="titulo">Está tardando demasiado. Prueba esto:</div>
+      <ul>
+        <li>Abre el enlace en Chrome o Safari, no dentro de WhatsApp, Instagram u otra app.</li>
+        <li>Cierra otras pestañas y apps abiertas, y vuelve a cargar.</li>
+        <li>Si sigue igual, haz una captura de esta pantalla y envíala.</li>
+      </ul>
+      <button type="button" onclick="location.reload()">Volver a cargar</button>
+      <div id="detalle"></div>
+      <div id="equipo"></div>
+    </div>
   </div>
 
   <script>
@@ -90,28 +115,81 @@
     var carga = document.querySelector("#carga");
     var relleno = document.querySelector("#relleno");
 
+    // Pantalla de carga que no se queda muda (2026-11-04). Un tester se quedó en «Versión de prueba: los días 1 a 24»
+    // sin ningún mensaje: antes, si Unity fallaba al arrancar (memoria del teléfono, almacenamiento bloqueado, un
+    // navegador dentro de otra app), el error solo iba a la consola y esta pantalla no cambiaba nunca. Ahora se ve
+    // el avance, cualquier fallo se escribe aquí y, si no avanza, aparece qué probar y un botón para recargar.
+    var estado = document.querySelector("#estado");
+    var ayuda = document.querySelector("#ayuda");
+    var cargaTerminada = false, fallo = false, preparando = false;
+    var ultimoProgreso = -1, ultimoAvance = Date.now();
+    document.querySelector("#equipo").textContent = navigator.userAgent;
+
+    function mostrarAyuda(titulo) {
+      if (cargaTerminada) return;
+      ayuda.querySelector(".titulo").textContent = titulo;
+      ayuda.hidden = false;
+      carga.classList.add("con-ayuda");
+    }
+    function mostrarFallo(texto) {
+      if (cargaTerminada) return;
+      fallo = true;
+      estado.textContent = "No se pudo abrir el juego.";
+      document.querySelector("#detalle").textContent = "Detalle: " + String(texto).split(" at ")[0].slice(0, 160);
+      mostrarAyuda("Prueba esto:");
+    }
+    window.addEventListener("error", function (e) { mostrarFallo(e && e.message ? e.message : "error desconocido"); });
+    window.addEventListener("unhandledrejection", function (e) { mostrarFallo(e && e.reason ? e.reason : "error desconocido"); });
+
+    // Navegadores dentro de otras apps (Instagram, Facebook, TikTok, vistas web de Android): son los que más se quedan sin memoria.
+    if (/Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|BytedanceWebview|Snapchat|Line\/|; wv\)/i.test(navigator.userAgent)) {
+      estado.textContent = "Si no carga, ábrelo en Chrome o Safari.";
+    }
+
+    // Sin avance: 45 s quieto descargando, o 60 s en «Preparando el juego» (ahí Unity no informa progreso).
+    setInterval(function () {
+      if (cargaTerminada || fallo || !ayuda.hidden) return;
+      if (Date.now() - ultimoAvance > (preparando ? 60000 : 45000)) mostrarAyuda("Está tardando demasiado. Prueba esto:");
+    }, 5000);
+
+    function alAvanzar(progreso) {
+      relleno.style.width = (progreso * 100) + "%";
+      if (fallo) return;   // tras un fallo, el progreso que siga llegando no debe tapar el aviso
+      if (progreso !== ultimoProgreso) { ultimoProgreso = progreso; ultimoAvance = Date.now(); }
+      if (progreso >= 1) {
+        if (!preparando) { preparando = true; ultimoAvance = Date.now(); }
+        estado.textContent = "Preparando el juego…";
+      } else {
+        estado.textContent = "Descargando… " + Math.floor(progreso * 100) + " %";
+      }
+    }
+
     // El tamaño del backbuffer lo maneja Unity vía matchWebGLToCanvasSize: si se
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-02_2333";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-05_1846";
+    script.onerror = function () { mostrarFallo("no se pudo descargar el cargador del juego (revisa la conexión)"); };
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-02_2333",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-02_2333",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-02_2333",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-05_1846",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-05_1846",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-05_1846",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
         productVersion: "0.1.0",
         matchWebGLToCanvasSize: true,
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
-      }, function (progreso) {
-        relleno.style.width = (progreso * 100) + "%";
-      }).then(function () {
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        // Sin esto, los errores de arranque de Unity solo iban a la consola y la pantalla de carga se quedaba quieta.
+        showBanner: function (mensaje, tipo) {
+          if (tipo === "error") mostrarFallo(mensaje); else console.warn(mensaje);
+        }
+      }, alAvanzar).then(function () {
+        cargaTerminada = true;
         carga.style.display = "none";
       }).catch(function (e) {
-        document.querySelector("#nota").textContent = "Error al cargar: " + e;
+        mostrarFallo(e);
       });
     };
     document.body.appendChild(script);

@@ -10,6 +10,16 @@ Versión de prueba de **Rumbo**, un juego sobre la vida y el dinero en un barrio
 - El juego no tiene cuentas, no pide datos y no se conecta a ningún servidor.
 - Las voces de Mario se generaron con IA.
 
+## Actualización del 5 de noviembre de 2026
+
+- Las decisiones importantes (aceptar un préstamo, avisar o cancelar algo acordado, rechazar una oferta) piden confirmación y dicen su consecuencia. Un doble toque ya no acepta sin querer.
+- Desde «Mis compromisos» puedes elegir uno y verlo mientras juegas: qué falta, dónde y el plazo. «Mostrar dónde» marca el sitio y desaparece al llegar.
+- El dinero se lee siempre igual («$4.50», no «4,5000»), y tras trabajar se ve cuánto dejó el turno y cómo queda el efectivo.
+- El sofá y la cama dicen cuánta energía recuperarás antes de elegir.
+- El menú ya no muestra el marcador ni los controles del juego, y «Continuar» dice el día y el efectivo de tu partida.
+- Si el juego no termina de cargar, la pantalla de carga lo dice y da qué probar.
+- Build publicada: `2026-11-05 18:46`. Sin cambios de precios, calendario o reglas económicas.
+
 ## Actualización del 24 de octubre de 2026
 
 - Energía visible con cápsula, rayo, cifra y estado de rendimiento. El relleno cambia entre verde salvia, ocre y terracota.
