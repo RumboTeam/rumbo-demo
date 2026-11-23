@@ -32,8 +32,7 @@
     }
 
     /* Letterbox a 9:16 — el juego es SOLO portrait (CanvasScaler referencia
-       1080x1920). El canvas viejo ocupaba el 100% de un `<body>
-<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>` sin restricción
+       1080x1920). El canvas viejo ocupaba el 100% de un `<body>` sin restricción
        de proporción: en una ventana de escritorio ancha (landscape) quedaba un
        lienzo horizontal, y toda la UI diseñada para portrait — el bloque de
        intro con texto largo, el botón Teléfono anclado abajo-derecha — se
@@ -82,14 +81,24 @@
       padding: 9px 16px; cursor: pointer; }
     #detalle, #equipo { font-size: 11px; color: #8A8177; margin-top: 8px; word-break: break-word; }
     #detalle:empty { display: none; }
-    #girar { display: none; position: fixed; inset: 0; z-index: 20; background: #14110E; color: #E8E2D8;
-      flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 0 32px; }
-    #girar .icono { font-size: 44px; }
-    @media (orientation: portrait) { #girar { display: flex; } }
+
+    #girar { display: none; position: fixed; inset: 0; z-index: 20; background: #14110E; color: #E8E2D8; box-sizing: border-box;
+      flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 16px 28px;
+      overflow-y: auto; touch-action: pan-y; }
+    #girar .icono { font-size: 44px; line-height: 1; }
+    #girar .titulo { font-size: 18px; font-weight: 600; }
+    #girar .ayuda { font-size: 14px; line-height: 1.5; max-width: 340px; }
+    #girar button { font: inherit; font-weight: 600; color: #F5F1EA; background: #C2502E; border: 0; border-radius: 8px; padding: 11px 18px; min-height: 44px; cursor: pointer; }
+    #girar button.sec { background: transparent; color: #E8E2D8; border: 1px solid #5B5249; font-weight: 400; }
+    #girar [hidden] { display: none; }
+    #girar .nota { font-size: 12px; color: #8A8177; max-width: 340px; }
+    #girar .datos { font-size: 11px; color: #8A8177; word-break: break-word; }
+    @media (orientation: portrait) and (max-width: 560px) { #girar { display: flex; } }
+    html.girado #girar { display: none; }
   </style>
 </head>
 <body>
-<div id="girar"><div class="icono">&#x21bb;</div><div>Gira el teléfono para jugar.</div><div style="font-size:12px;color:#8A8177;">Esta versión de prueba se juega en horizontal.</div></div>
+<div id='girar' role='alert'><div class='icono'>&#x21bb;</div><div class='titulo'>Gira el teléfono para jugar.</div><div class='ayuda' id='girar-ayuda'></div><button type='button' id='girar-lado'>Jugar con el teléfono de lado</button><button type='button' class='sec' id='girar-chrome' hidden>Abrir en Chrome</button><button type='button' class='sec' id='girar-copiar' hidden>Copiar enlace</button><div class='nota' id='girar-nota'></div><div class='nota'>Si no se arregla, haz una captura de esta pantalla y envíala.</div><div class='datos' id='girar-datos'></div></div>
   <canvas id="unity-canvas" tabindex="-1"></canvas>
 
   <div id="carga">
@@ -168,13 +177,13 @@
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-19_0117";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-22_2311";
     script.onerror = function () { mostrarFallo("no se pudo descargar el cargador del juego (revisa la conexión)"); };
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-19_0117",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-19_0117",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-19_0117",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-22_2311",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-22_2311",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-22_2311",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
@@ -194,5 +203,156 @@
     };
     document.body.appendChild(script);
   </script>
+<script>
+(function () {
+  var g = document.getElementById('girar');
+  var canvas = document.getElementById('unity-canvas');
+  var carga = document.getElementById('carga');
+  if (!g || !canvas) return;
+  var raiz = document.documentElement;
+  var ua = navigator.userAgent || '';
+  // Solo en el equipo local: simular un navegador interno para probar el aviso (?navegador=instagram|tiktok).
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+    var prueba = /[?&]navegador=([a-z]+)/i.exec(location.search);
+    if (prueba) ua = prueba[1] + ' (Linux; Android 14)';
+  }
+  var interno = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Bytedance|trill|Snapchat|Line\//i.test(ua) || /; wv\)/.test(ua);
+  var nombre = /Instagram/i.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB|facebook/i.test(ua) ? 'Facebook' : /TikTok|musical_ly|Bytedance|trill/i.test(ua) ? 'TikTok'
+    : /Snapchat/i.test(ua) ? 'Snapchat' : /Line\//i.test(ua) ? 'Line' : 'esta app';
+  var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua);
+  var ayuda = document.getElementById('girar-ayuda'), nota = document.getElementById('girar-nota'), datos = document.getElementById('girar-datos');
+  var lado = document.getElementById('girar-lado'), chrome = document.getElementById('girar-chrome'), copiar = document.getElementById('girar-copiar');
+
+  ayuda.textContent = interno
+    ? 'La app de ' + nombre + ' no gira la pantalla. Puedes jugar aquí con el teléfono de lado, o abrir el enlace en Chrome.'
+    : 'Si ya lo giraste y sigue igual, tienes el bloqueo de rotación activado. Desactívalo (iPhone: Centro de control; Android: rotación automática) o juega con el teléfono de lado.';
+  chrome.hidden = !(interno && android);
+  copiar.hidden = !interno;
+  if (interno) nota.textContent = 'También: en el menú de la app (los tres puntos), «Abrir en el navegador».';
+
+  var enlace = location.origin + location.pathname;
+  chrome.onclick = function () {
+    location.href = 'intent://' + location.host + location.pathname + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(enlace) + ';end';
+  };
+  copiar.onclick = function () {
+    var listo = function () { nota.textContent = 'Enlace copiado. Pégalo en Chrome.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(enlace).then(listo, function () { window.prompt('Copia este enlace:', enlace); });
+    else window.prompt('Copia este enlace:', enlace);
+  };
+
+  // ── Modo de lado: el lienzo girado 90° y los toques traducidos ──
+  var giro = 90;   // +90: la parte de arriba del juego hacia el borde derecho del teléfono (teléfono girado hacia la izquierda)
+  var cargaGirada = false;
+  function deLado() { return raiz.classList.contains('girado'); }
+  function medir() {
+    var W = window.innerWidth, H = window.innerHeight;
+    var Lw = Math.min(H, W * 16 / 9), Lh = Lw * 9 / 16;
+    return { W: W, H: H, Lw: Lw, Lh: Lh, left: (W - Lw) / 2, top: (H - Lh) / 2 };
+  }
+  function aplicar() {
+    var s = canvas.style;
+    if (!deLado()) {
+      s.position = s.left = s.top = s.width = s.height = s.transform = '';
+      // Solo se deshace lo que se puso: la página oculta la pantalla de carga con un estilo propio al terminar de cargar, y no hay que tocarlo.
+      if (carga && cargaGirada) { var c0 = carga.style; c0.inset = c0.left = c0.top = c0.width = c0.height = c0.transform = ''; cargaGirada = false; }
+      return;
+    }
+    var m = medir();
+    s.position = 'fixed'; s.left = m.left + 'px'; s.top = m.top + 'px'; s.width = m.Lw + 'px'; s.height = m.Lh + 'px';
+    s.transform = 'rotate(' + giro + 'deg)';
+    if (carga) {
+      var c = carga.style;
+      c.inset = 'auto'; c.left = '50%'; c.top = '50%'; c.width = m.H + 'px'; c.height = m.W + 'px';
+      c.transform = 'translate(-50%,-50%) rotate(' + giro + 'deg)';
+      cargaGirada = true;
+    }
+  }
+  // El rectángulo del lienzo SIN girar: es el que Unity usa para pasar de coordenadas de pantalla a coordenadas del juego.
+  var rectOriginal = canvas.getBoundingClientRect.bind(canvas);
+  canvas.getBoundingClientRect = function () {
+    if (!deLado()) return rectOriginal();
+    var m = medir();
+    return { left: m.left, top: m.top, right: m.left + m.Lw, bottom: m.top + m.Lh, width: m.Lw, height: m.Lh, x: m.left, y: m.top };
+  };
+  // De un punto de la pantalla al punto del lienzo sin girar que se ve ahí.
+  function aLienzo(cx, cy) {
+    var m = medir(), dx = cx - m.W / 2, dy = cy - m.H / 2;
+    var u = giro === 90 ? dy : -dy, v = giro === 90 ? -dx : dx;
+    return { x: m.left + m.Lw / 2 + u, y: m.top + m.Lh / 2 + v };
+  }
+  function toque(t) {
+    var p = aLienzo(t.clientX, t.clientY), dx = p.x - t.clientX, dy = p.y - t.clientY;
+    return { identifier: t.identifier, target: t.target, clientX: p.x, clientY: p.y, pageX: t.pageX + dx, pageY: t.pageY + dy,
+      screenX: t.screenX + dx, screenY: t.screenY + dy, radiusX: t.radiusX, radiusY: t.radiusY, force: t.force, rotationAngle: t.rotationAngle };
+  }
+  function lista(l) {
+    var r = [];
+    if (l) for (var i = 0; i < l.length; i++) r.push(toque(l[i]));
+    r.item = function (i) { return r[i] || null; };
+    return r;
+  }
+  function traducir(e) {
+    var extra = {};
+    if ('touches' in e) { extra.touches = lista(e.touches); extra.changedTouches = lista(e.changedTouches); extra.targetTouches = lista(e.targetTouches); }
+    if (typeof e.clientX === 'number') {
+      var p = aLienzo(e.clientX, e.clientY), dx = p.x - e.clientX, dy = p.y - e.clientY, r = canvas.getBoundingClientRect();
+      extra.clientX = extra.x = p.x; extra.clientY = extra.y = p.y; extra.pageX = e.pageX + dx; extra.pageY = e.pageY + dy;
+      extra.screenX = e.screenX + dx; extra.screenY = e.screenY + dy; extra.offsetX = p.x - r.left; extra.offsetY = p.y - r.top;
+      if (typeof e.movementX === 'number') { extra.movementX = giro === 90 ? e.movementY : -e.movementY; extra.movementY = giro === 90 ? -e.movementX : e.movementX; }
+    }
+    return new Proxy(e, { get: function (t, k) { if (k in extra) return extra[k]; var v = t[k]; return typeof v === 'function' ? v.bind(t) : v; } });
+  }
+  // Los oyentes de toques, ratón y puntero que Unity pone (después de esto) en el lienzo, la ventana o el documento reciben el evento traducido
+  // mientras se juega de lado; si no, el evento tal cual. Nada más cambia.
+  var tipos = /^(touchstart|touchmove|touchend|touchcancel|mousedown|mousemove|mouseup|click|dblclick|contextmenu|wheel|pointerdown|pointermove|pointerup|pointercancel|pointerover|pointerout|pointerenter|pointerleave)$/;
+  var envoltorios = new WeakMap();
+  var poner = EventTarget.prototype.addEventListener, quitar = EventTarget.prototype.removeEventListener;
+  EventTarget.prototype.addEventListener = function (tipo, fn, op) {
+    if (fn && (this === canvas || this === window || this === document) && tipos.test(tipo)) {
+      var w = envoltorios.get(fn);
+      if (!w) {
+        w = function (e) {
+          var ev = deLado() ? traducir(e) : e;
+          return typeof fn === 'function' ? fn.call(this, ev) : fn.handleEvent(ev);
+        };
+        envoltorios.set(fn, w);
+      }
+      return poner.call(this, tipo, w, op);
+    }
+    return poner.call(this, tipo, fn, op);
+  };
+  EventTarget.prototype.removeEventListener = function (tipo, fn, op) {
+    return quitar.call(this, tipo, (fn && envoltorios.get(fn)) || fn, op);
+  };
+  // El sentido del giro sigue al teléfono: con el teléfono girado hacia la otra mano, el juego se da la vuelta (iOS informa el signo al revés).
+  window.addEventListener('devicemotion', function (e) {
+    var a = e.accelerationIncludingGravity;
+    if (!a || typeof a.x !== 'number') return;
+    var x = ios ? -a.x : a.x, nuevo = x > 6 ? 90 : x < -6 ? -90 : giro;
+    if (nuevo !== giro) { giro = nuevo; actualizar(); }
+  });
+
+  function ponerDeLado(si) {
+    raiz.classList.toggle('girado', si);
+    try { sessionStorage.setItem('rumbo.delado', si ? '1' : ''); } catch (err) {}
+    aplicar();
+    actualizar();
+  }
+  lado.onclick = function () { ponerDeLado(true); };
+
+  function actualizar() {
+    var tipo = window.screen && screen.orientation ? screen.orientation.type : (typeof window.orientation === 'number' ? window.orientation + 'grados' : 'sin dato');
+    // Si la pantalla de verdad pasa a horizontal (se quitó el bloqueo, o se abrió en Chrome), se juega normal.
+    if (deLado() && window.innerWidth > window.innerHeight) { raiz.classList.remove('girado'); try { sessionStorage.setItem('rumbo.delado', ''); } catch (err) {} }
+    datos.textContent = window.innerWidth + 'x' + window.innerHeight + ' · ' + (interno ? nombre : 'navegador') + ' · ' + tipo + (deLado() ? ' · de lado ' + giro : '');
+    aplicar();
+  }
+  try { if (sessionStorage.getItem('rumbo.delado') === '1' && window.innerWidth < window.innerHeight) raiz.classList.add('girado'); } catch (err) {}
+  actualizar();
+  window.addEventListener('resize', actualizar);
+  window.addEventListener('orientationchange', function () { setTimeout(actualizar, 250); });
+  window.addEventListener('pageshow', actualizar);
+})();
+</script>
 </body>
 </html>
