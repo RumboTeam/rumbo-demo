@@ -177,13 +177,13 @@
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-23_0218";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-24_1713";
     script.onerror = function () { mostrarFallo("no se pudo descargar el cargador del juego (revisa la conexión)"); };
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-23_0218",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-23_0218",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-23_0218",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-24_1713",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-24_1713",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-24_1713",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
