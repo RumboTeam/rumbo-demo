@@ -105,7 +105,7 @@
     <div style="font-size:15px; letter-spacing:.08em;">RUMBO · DEMO</div>
     <div id="barra"><div id="relleno"></div></div>
     <div id="estado">Cargando…</div>
-    <div id="nota">La primera carga descarga unos 40 MB. Mejor con Wi‑Fi.<br>Versión de prueba: los días 1 a 24.<br>Tu partida se guarda solo en este navegador.<br>Las voces de Mario se generaron con IA.</div>
+    <div id="nota">La primera carga descarga unos 45 MB. Mejor con Wi‑Fi.<br>Versión de prueba: los días 1 a 24.<br>Tu partida se guarda solo en este navegador.<br>Las voces de Mario se generaron con IA.</div>
     <div id="ayuda" hidden>
       <div class="titulo">Está tardando demasiado. Prueba esto:</div>
       <ul>
@@ -177,13 +177,13 @@
     // asigna canvas.width/height a mano Y se desactiva esa opción, el buffer queda
     // en 0x0 y no se dibuja nada. El CSS define el tamaño; Unity sigue al CSS.
     var script = document.createElement("script");
-    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-24_1713";
+    script.src = "Build/BuildWeb-demo-horizontal.loader.js?v=2026-11-26_2350";
     script.onerror = function () { mostrarFallo("no se pudo descargar el cargador del juego (revisa la conexión)"); };
     script.onload = function () {
       createUnityInstance(canvas, {
-        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-24_1713",
-        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-24_1713",
-        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-24_1713",
+        dataUrl: "Build/BuildWeb-demo-horizontal.data.unityweb?v=2026-11-26_2350",
+        frameworkUrl: "Build/BuildWeb-demo-horizontal.framework.js.unityweb?v=2026-11-26_2350",
+        codeUrl: "Build/BuildWeb-demo-horizontal.wasm.unityweb?v=2026-11-26_2350",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Rumbo",
         productName: "Rumbo demo",
